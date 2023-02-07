@@ -50,13 +50,10 @@ Resources:
 - Loops: `loop`, `while`, `for...in` (iterate over collection)
 - `break`/`continue` superpowers: `break 'loop_label;` and `break return_val;`
 
-### Rust `String` and string literals
+### Rust Range & Slice
 
-- `String`: a smart pointer, with interior data stored on heap. Can be mutated
-- String literal `str`: a string slice references read-only memory (size known at compile time). Cannot be mutated
-- Convert `str` to `String` using `String::from()`
-- Functions that take `&str` (string slice) as argument can also take `&String` as argument. `&String` is implicitly deref coerced into `&str` (`Deref` trait)
-
+- Range: e.g. `1..5`
+- Slice: reference a contiguous sequence of elements in a collection 
 
 ### Rust Ownership & Borrowing
 
@@ -71,11 +68,40 @@ Resources:
 - References rules:
   - Can have any number of immutable references (in the same reference scope)
   - Can only have at most 1 mutable reference (in the same reference scope)
+- Automatic referencing/de-referencing: automatically insert `*` or `&` in order to match the signature of the function
 
-### Rust Range & Slice
+### Rust `String` and string literals
 
-- Range: e.g. `1..5`
-- Slice: reference a contiguous sequence of elements in a collection 
+- `String`: a smart pointer, with interior data stored on heap. Can be mutated
+- String literal `str`: a string slice references read-only memory (size known at compile time). Cannot be mutated
+- Convert `str` to `String` using `String::from()`
+- Functions that take `&str` (string slice) as argument can also take `&String` as argument. `&String` is implicitly deref coerced into `&str` (`Deref` trait)
+
+### Rust `struct`
+
+- When the struct instance is assigned to a reference of another struct, stack-value fields are `copy`, heap-value fields are referenced.
+- When the struct instance is assigned to an instance of another struct, stack-value fields are `copy`, heap-value fields are `move`.
+- Tuple struct: struct without named fields. Indexed like regular tuple
+- Unit struct: struct without fields
+- Method's first argument is the struct instance itself
+- When inside `impl`: `&self` is shorthand for `self: &Self`, and `Self` is shorthand for the struct e.g. `Rectangle`
+- Can take ownership of the struct instance (`self`), or borrow immutably (`&self`), or borrow mutably (`&mut self`)
+- Define associated functions (static methods) e.g. `new` the same way as methods but without `self` as first argument
+
+### Rust print
+
+- `println!()` macro: takes reference
+- `dbg!()` macro: takes ownership and then return ownership. Print to `stderr`
+- No format specifiers: `Display` (`Display` trait needs to be implemented)
+- Format specifier `:?`(or `:#?`): `Debug` (`Debug` trait needs to be implemented). `Debug` trait can be automatically implemented using `![derive(Debug)]` attribute
+
+### Rust Enum
+
+- E.g. `Option`, `Result`
+- Useful combination with `match`, and `if let` expressions. Both enable smart pattern matching with enum
+- Variants of the enum are namespaced under its identifier
+- Optionally associate values, *unnamed* or *named*, to an Enum variant e.g. `IpAddr::V4(127, 0, 0, 1)` (initialisation), `Position { x: i32, y:i32 }` (type definition)
+- Can also `impl` methods on enum. Methods will be defined on the enum value e.g. `Fruit::Apple.wash()`. The enum value will be the `Self` inside `impl`
 
 ### Rust Tests
 
