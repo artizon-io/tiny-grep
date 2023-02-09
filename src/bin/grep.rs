@@ -16,8 +16,8 @@ fn main() {
     // dbg!() macro will move its argument, so must be placed after Config::build(&args)
     dbg!(args);
 
-    println!("Searching for '{}'", &config.query);
-    println!("In file '{}'", &config.file_path);
+    println!("Searching for '{}'", config.query);
+    println!("In file '{}'", config.file_path);
 
     // run() will take ownership of config
     if let Err(e) = rust_grep::run(config) {

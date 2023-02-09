@@ -3,7 +3,7 @@ use std::error::Error;
 
 pub struct Config {
   pub query: String,
-  pub file_path: String,
+  pub file_path: String
 }
 
 impl Config {

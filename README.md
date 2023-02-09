@@ -103,5 +103,16 @@ Resources:
 - Optionally associate values, *unnamed* or *named*, to an Enum variant e.g. `IpAddr::V4(127, 0, 0, 1)` (initialisation), `Position { x: i32, y:i32 }` (type definition)
 - Can also `impl` methods on enum. Methods will be defined on the enum value e.g. `Fruit::Apple.wash()`. The enum value will be the `Self` inside `impl`
 
+### Rust Module System
+
+- Binary crate: must contains `main` function, either inside `main.rs` or `bin/`
+- Library crate: either inside `lib.rs`, or `lib/`
+- Package: bundle of 1 or more crates. Define by `Cargo.toml`
+- `use`: brings a path into scope. Can nest/glob imports using `{}`, `*`, and `self`
+- By default module would not be included. Must explicitly tell Rust compiler to look for it by `mod moduleName;`
+- Module can be defined inside `moduleName.rs` (relative), `moduleName/mod.rs` (relative; older-style; not recommended), or inline `moduleName {}`
+- Can use the crate name e.g. `crateName::moduleName` and `super` ato address modules
+- Re-export imported path using `pub use`
+
 ### Rust Tests
 
