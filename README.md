@@ -114,5 +114,49 @@ Resources:
 - Can use the crate name e.g. `crateName::moduleName` and `super` ato address modules
 - Re-export imported path using `pub use`
 
+### Rust Collections
+
+- Interior data stored on *heap*
+- Collection itself e.g. `String` is a *smart pointer*
+
+`Vec<T>`
+- Quick initialisation using `vec![1, 2, 3]` macro
+- Access by index
+  - `vec[]` might panic
+  -  `vec.get()` returns `Option<&T>`. Never panics
+- Operations on vector (e.g. `push`, `remove`) are a immutable/mutable borrow on the vector, which means immutably/mutably borrowing every element inside the vector
+
+`String`
+- Underneath is a `Vec<u8>`
+- Signature of `+` (`add`): `fn add(self, s: &str) -> String`. Takes ownership of `Self`, and borrow immutably from the second `String` (coerced into `&str`)
+- `format!` macro returns `String`
+- Cannot directly index using `[]` because each character inside the string takes variable no. bytes to store
+- Must iterate over characters/bytes using `.chars()` or `.bytes()`
+
+`HashMap<K, V>`
+- `.get(key)` returns `Option<&V>`
+- Iterate inside `for...in` similar to `Vec<T>`. `HashMap` also has iterators
+- Use `.entry(key).or_insert(value)` syntax to map a value to a key if key doesn't yet exist
+
+### Rust Error Handling & `?` Operator
+
+Recoverable Error
+- In the form of `Result<T, E>`
+- Unwrap using `unwrap()`, `expect()`, `match`, `if let`, `?`
+- `<expression>?`: shortcut that return the error (in the function) if `<expression>` evals to an error. Else, evals to the `OK` value
+- Underneath `?` will call the `from` function (`From` trait, e.g. `impl From<io::Error>`) to cast the error type (e.g. `MyCustomError`) to the return type of the function (e.g. `Result<String, io::Error>`)
+- `?` can be chained
+- `?` can be used in `Result`, `Option`, or anything that inherits `FromResidual`
+- Using `?` with `Option<T>` causes `None` to be returned early if expression evals to `None`
+
+Unrecoverable Error
+- E.g. `panic!`
+- Procedure of unrecoverable error:
+  1. Print failure message
+  2. Unwind, clean up the stack
+  3. quit
+- Optionally print stack trace via environment variable
+- Optionally *immediate-abort* instead of *unwinding*
+
 ### Rust Tests
 
