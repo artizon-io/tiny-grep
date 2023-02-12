@@ -158,5 +158,51 @@ Unrecoverable Error
 - Optionally print stack trace via environment variable
 - Optionally *immediate-abort* instead of *unwinding*
 
+### Rust Generics
+
+- Capture type as a paramenter using the syntax `<T, U>` just like conventional OOP languages
+- *Trait bounds*: can restrict the generic types to only those that implement certain traits by `<T: SomeTrait>`/`<T: SomeTrait1 + SomeTrait2>`
+- Implementing methods on struct:
+  - `impl<T> MyStruct<T> {}`: defining type parameter inside `impl` block. `T` can also be trait bounded `impl<T: SomeTrait> MyStruct<T>`
+  - `impl MyStruct<i32>`: make type concrete inside `impl` block
+  - Methods themselves can also define generic types
+  - *Blanket implementations*: `impl<T: MyTrait1> MyTrait2 for MyStruct` - conditionally implement `MyTrait2` only if `T` implements `MyTrait1`
+- Rust compiler performs *monomorphization*: the process of turning generic code into specific code by filling in the concrete types that are used
+
+### Rust Traits
+
+- For defining shared behaviour on types (e.g. struct). Similar to interfaces in other languages
+- Define trait using e.g. `trait MyTrait {}`. Inside trait, define method signatures e.g. `fn summarize(&self) -> String;`, or define default implementations by giving method a body
+- Default implementation can also invoke other not-yet-implemented abstract methods
+- Default implementation cannot be invoked by the overriding implementation (unlike other languages that have `super`)
+- Implement trait by using the `impl MyTrait for MyStruct {}` syntax
+- To use the trait methods, user must also bring the trait into scope. E.g. `use rand::Rng;`
+- Restriction that enforces *coherence*: cannot implement external (outside crate) trait on an external type. This is such that outsiders cannot break a working crate by implementing a trait on a type that already implemented that trait
+- *Trait bounds*: can force concrete types to those that implement certain traits by `x: impl SomeTrait`/`x: (impl SomeTrait1 + SomeTrait2)` (or `x: &impl SomeTrait`/`x: &(impl SomeTrait1 + SomeTrait2)` if borrowed immutably). Alternative is to use generics
+- Define cleaner trait bounds using the `where` syntax
+
+Examples:
+- Types can be compared e.g. `>` if they implement `std::cmp::PartialOrd` trait
+- Types can be copied if they implement `Copy` trait
+- Types will be dropped if they implement `Drop` trait
+- Types will be implicitly casted if they implement `From` trait
+- `Iterator`
+- `Deref` for de-reference coercing
+- `Display` and `Debug` for data string representation
+- Closures: `FnOnce`, `FnMut`, `Fn`
+
+### Rust Lifetime
+
+- For ensuring references are valid as long as we need them to be
+- Every reference has a lifetime. Most of the time, lifetimes are implicit and inferred
+- Lifetime annotations: `&'a i32`, `&'a mut i32`
+- Capturing lifetime values (ranges) as *generic lifetime parameters* e.g. `fn longest<'a>(x: &'a str, y: &'a str) -> &'a str`. `'a` will be a concrete lifetime equal to the intersection of `x` and `y`
+- Struct can hold references (every ref must be given a lifetime explicitly), so struct can also take generic lifetime parameters. The whole struct instance becomes invalid when one of its field becomes invalid
+- Lifetime elision rules: (rules used by Rust compiler to auto infer lifetimes of references)
+  1. Compiler assigns a lifetime parameter to each *input parameter* that’s a reference. If all after all rules are applied, and there is still unassigned *output references*, compiler will throw an error
+  2. If there is exactly *1 input* lifetime parameter, that lifetime is assigned to all output lifetime parameters
+  3. In the case of *multiple input* lifetime parameters, if 1 of them is `&self` or `&mut self`, the lifetime of `self` is assigned to all output lifetime parameters
+- `'static`: reference can live for the entire duration of the program. E.g. string literals `&str`
+
 ### Rust Tests
 
