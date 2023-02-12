@@ -180,6 +180,7 @@ Unrecoverable Error
 - Restriction that enforces *coherence*: cannot implement external (outside crate) trait on an external type. This is such that outsiders cannot break a working crate by implementing a trait on a type that already implemented that trait
 - *Trait bounds*: can force concrete types to those that implement certain traits by `x: impl SomeTrait`/`x: (impl SomeTrait1 + SomeTrait2)` (or `x: &impl SomeTrait`/`x: &(impl SomeTrait1 + SomeTrait2)` if borrowed immutably). Alternative is to use generics
 - Define cleaner trait bounds using the `where` syntax
+- Some simple traits are *derivable*: e.g. `Debug`, `PartialEq` via `#[derive(PartialEq, Debug)]`
 
 Examples:
 - Types can be compared e.g. `>` if they implement `std::cmp::PartialOrd` trait
@@ -206,3 +207,9 @@ Examples:
 
 ### Rust Tests
 
+- Test: a function annotated with `#[test]` attribute
+- `assert_eq!`, `assert_ne!`, `assert!` (boolean), `panic!` macros
+  - `assert_eq!` requires arguments to implement `PartialEq` and `Debug` traits
+  - All of these macros take optional arguments for custom error messages (as arguments to `format!`)
+- Give test `#[should_panic()]` attribute to declare it as should-panic
+- Test *filtering*: only run specific test
