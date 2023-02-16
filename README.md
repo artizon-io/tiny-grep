@@ -16,6 +16,44 @@ Resources:
 - [Rust book - chapter 10](https://doc.rust-lang.org/book/ch10-00-generics.html)
 - [Rust book - chapter 11](https://doc.rust-lang.org/book/ch11-00-testing.html)
 - [Rust-by-example - chapter 19 - Strings](https://doc.rust-lang.org/rust-by-example/std/str.html)
+- [Wikipedia - Z Shell](https://en.wikipedia.org/wiki/Z_shell)
+- [Unix shell](https://en.wikipedia.org/wiki/Unix_shell)
+- [Github - zsh-completions](https://github.com/zsh-users/zsh-completions)
+- [Github - zsh mirror](https://github.com/zsh-users/zsh)
+- [POSIX](https://en.wikipedia.org/wiki/POSIX)
+- [Linux](https://en.wikipedia.org/wiki/Linux)
+
+### Unix Shell & POSIX
+
+- Command-line interpreter that provides a command line user interface for Unix-like operating systems. User interacts with the shell using shell scripts - a hybrid between scripting language and an interactive command language
+- Typically user interacts with a shell through a terminal emulator
+- Common features of shell:
+  - Filename wildcarding
+  - Piping
+  - Here documents
+  - Command substitution (output of a command replaces the command itself; `$()`)
+- POSIX (Portable Operating System Interface): a family of standards specified by the IEEE Computer Society for maintaining compatibility between operating systems
+
+### Bash
+
+- Part of the GNU project
+
+### Zsh
+
+- Extends from Bourne shell (`sh`)
+- Features:
+  - Programmable command-line completion
+  - Command history that is sharable among all running shells
+  - Extended file globbing without needing to run an external program such as `find`
+  - Improved variable/array handling
+  - Editing of multi-line commands in a single buffer
+  - Autofill of command names and file names
+  - Various compatibility modes, e.g. Zsh can pretend to be a Bourne shell when run as `/bin/sh`
+  - Prompt theme support
+  - Ability to put prompt information on the right side of the screen
+  - Loadable modules, e.g. full TCP and Unix domain socket controls, an FTP client, and extended math functions
+  - `where` command. Works like the `which` command but shows all the locations
+  - Named directories. This allows the user to set up shortcuts such as `~mydir`, which then behave the way `~` and `~user` do
 
 ### Rust Variables & Types
 
