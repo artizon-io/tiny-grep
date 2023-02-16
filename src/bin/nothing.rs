@@ -1,11 +1,14 @@
 pub struct User {
     pub name: String,
-    pub age: u32
+    pub age: u32,
 }
 
 impl User {
     pub fn new() -> User {
-        User { name: "artizon".to_string(), age: 20 }
+        User {
+            name: "artizon".to_string(),
+            age: 20,
+        }
     }
 
     pub fn print_name(&self) -> () {

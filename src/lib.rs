@@ -1,45 +1,57 @@
-use std::fs;
+// use std::env;
 use std::error::Error;
-use std::env;
+use std::fs;
 
 pub struct Config {
-  pub query: String,
-  pub file_path: String,
-  pub search_options: SearchOptions
+    pub query: String,
+    pub file_path: String,
+    pub search_options: SearchOptions,
 }
 
 pub struct SearchOptions {
-    case_sensitive: bool
+    case_sensitive: bool,
 }
 
 impl Config {
     // Convention is new() never fails
-    pub fn new(args: &[String]) -> Config {
-        assert!(args.len() >= 3, "Less than 2 arguments received");
+    // pub fn new(args: &[String]) -> Config {
+    //     assert!(args.len() >= 3, "Less than 2 arguments received");
 
-        let query = args[1].clone();
-        let file_path = args[2].clone();
+    //     let query = args[1].clone();
+    //     let file_path = args[2].clone();
 
-        let case_sensitive = env::var("CASE_SENSITIVE").is_ok();
+    //     let case_sensitive = env::var("CASE_SENSITIVE").is_ok();
 
-        Config { query, file_path, search_options: SearchOptions { case_sensitive } }
+    //     Config { query, file_path, search_options: SearchOptions { case_sensitive } }
+    // }
+
+    pub fn new(query: &str, file_path: &str, case_sensitive: bool) -> Config {
+        Config {
+            query: query.clone().to_string(),
+            file_path: file_path.clone().to_string(),
+            search_options: SearchOptions { case_sensitive },
+        }
     }
 
     // Let error value be a string literal that have 'static lifetime
-    pub fn build(args: &[String]) -> Result<Config, &'static str> {
-        if args.len() < 3 {
-            return Err("Less than 2 arguments received");
-        }
+    // pub fn build(args: &[String]) -> Result<Config, &'static str> {
+    //     if args.len() < 3 {
+    //         return Err("Less than 2 arguments received");
+    //     }
 
-        let query = args[1].clone();
-        let file_path = args[2].clone();
-        
-        // env::var() returns Result enum
-        // is_ok() returns true if the Result enum is Ok variant
-        let case_sensitive = env::var("CASE_SENSITIVE").is_ok();
+    //     let query = args[1].clone();
+    //     let file_path = args[2].clone();
 
-        Ok(Config { query, file_path, search_options: SearchOptions { case_sensitive }})
-    }
+    //     // env::var() returns Result enum
+    //     // is_ok() returns true if the Result enum is Ok variant
+    //     let case_sensitive = env::var("CASE_SENSITIVE").is_ok();
+
+    //     Ok(Config {
+    //         query,
+    //         file_path,
+    //         search_options: SearchOptions { case_sensitive },
+    //     })
+    // }
 }
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
@@ -58,14 +70,18 @@ fn search<'a>(query: &str, contents: &'a str, search_options: &SearchOptions) ->
     let query_lowercase = &query.to_lowercase();
 
     match search_options.case_sensitive {
-        true => for line in contents.lines() {
-            if line.contains(query) {
-                results.push(line);
+        true => {
+            for line in contents.lines() {
+                if line.contains(query) {
+                    results.push(line);
+                }
             }
         }
-        false => for line in contents.lines() {
-            if line.to_lowercase().contains(query_lowercase) {
-                results.push(line);
+        false => {
+            for line in contents.lines() {
+                if line.to_lowercase().contains(query_lowercase) {
+                    results.push(line);
+                }
             }
         }
     }
@@ -75,8 +91,8 @@ fn search<'a>(query: &str, contents: &'a str, search_options: &SearchOptions) ->
 
 #[cfg(test)]
 mod tests {
-    use indoc::indoc;
     use super::*;
+    use indoc::indoc;
 
     #[test]
     fn case_insensitive() {
@@ -87,7 +103,16 @@ mod tests {
             World Hello World.
         "};
 
-        assert_eq!(vec!["hello world.", "World Hello World."], search(query, contents, &SearchOptions { case_sensitive: false }));
+        assert_eq!(
+            vec!["hello world.", "World Hello World."],
+            search(
+                query,
+                contents,
+                &SearchOptions {
+                    case_sensitive: false
+                }
+            )
+        );
     }
 
     #[test]
@@ -101,7 +126,13 @@ mod tests {
 
         assert_eq!(
             vec!["hello world."],
-            search(query, contents, &SearchOptions { case_sensitive: true })
+            search(
+                query,
+                contents,
+                &SearchOptions {
+                    case_sensitive: true
+                }
+            )
         );
     }
 }
