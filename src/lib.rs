@@ -27,7 +27,7 @@ impl Config {
 
     // Let error value be a string literal that have 'static lifetime
     pub fn build(args: &[String]) -> Result<Config, &'static str> {
-        if args.len() < 2 {
+        if args.len() < 3 {
             return Err("Less than 2 arguments received");
         }
 
