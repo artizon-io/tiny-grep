@@ -1,5 +1,6 @@
 // use std::env;
 use clap::{Parser, ValueEnum};
+use requestty::questions;
 use std::path::Path;
 use std::process;
 
@@ -14,11 +15,11 @@ struct Cli {
     /// The query string to search for
     // Make it a keyword argument
     // #[arg(long)]
-    query: String,
+    query: Option<String>,
 
     /// The file path to search in
     #[arg(value_parser = file_path_parser)]
-    file_path: String,
+    file_path: Option<String>,
 
     /// Interactive mode
     #[arg(long)]
@@ -49,17 +50,52 @@ fn file_path_parser(file_path: &str) -> Result<String, String> {
     }
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
     let config = match cli.interactive {
-        true => Config::new("", "", false),
+        true => {
+            let questions = questions![
+                Input {
+                    name: "query",
+                    message: "String to search for?",
+                    default: "Hello world",
+                },
+                Input {
+                    name: "file_path",
+                    message: "File to search in?",
+                    default: "text.txt",
+                },
+                Confirm {
+                    name: "case_sensitive",
+                    message: "Case sensitive search?",
+                    default: false,
+                }
+            ];
+
+            let answers = requestty::prompt(questions)?;
+
+            // println!("Answers: {:#?}", answers);
+
+            // println!("{:#?}", answers["query"]);
+            // println!("{:#?}", answers["file_path"]);
+
+            Config::new(
+                &answers["query"].as_string().unwrap(),
+                &answers["file_path"].as_string().unwrap(),
+                answers["case_sensitive"].as_bool().unwrap(),
+            )
+        }
         false => {
             // env::args() will return an iterator over the arguments
             // let args: Vec<String> = env::args().collect();
             // args[0] will equal to the relative path of the executable
 
-            Config::new(&cli.query, &cli.file_path, cli.case_sensitive)
+            Config::new(
+                &cli.query.unwrap(),
+                &cli.file_path.unwrap(),
+                cli.case_sensitive,
+            )
             // maybe_config.unwrap_or_else(|err| {
             //     eprintln!("Problem parsing arguments: {err}");
             //     process::exit(1);
@@ -78,4 +114,6 @@ fn main() {
         eprintln!("Application error: {e}");
         process::exit(1);
     }
+
+    Ok(())
 }
