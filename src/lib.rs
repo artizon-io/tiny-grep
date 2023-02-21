@@ -2,10 +2,11 @@ use clap::ValueEnum;
 use colored::*;
 use std::error::Error;
 use std::fs;
+use std::path::Path;
 
 pub struct Config {
     pub query: String,
-    pub file_path: String,
+    pub file_path: Box<Path>,
     pub search_options: SearchOptions,
 }
 
@@ -45,8 +46,8 @@ impl SearchOptions {
 impl Config {
     // Convention is new() never fails
     pub fn new(
-        query: &str,
-        file_path: &str,
+        query: String,
+        file_path: Box<Path>,
         case_sensitive: bool,
         line_numbered: bool,
         colored: bool,
@@ -54,7 +55,7 @@ impl Config {
     ) -> Config {
         Config {
             query: query.to_string(),
-            file_path: file_path.to_string(),
+            file_path,
             search_options: SearchOptions {
                 case_sensitive,
                 line_numbered,
@@ -63,78 +64,87 @@ impl Config {
             },
         }
     }
-
-    /// Build a new Config struct using the array of command line arguments
-    // Let error value be a string literal that have 'static lifetime (for now)
-    pub fn build(args: &[String]) -> Result<Config, &'static str> {
-        if args.len() < 3 {
-            return Err("Less than 2 arguments received");
-        }
-
-        let query = args[1].clone();
-        let file_path = args[2].clone();
-
-        Ok(Config {
-            query,
-            file_path,
-            search_options: SearchOptions {
-                case_sensitive: false,
-                line_numbered: false,
-                colored: false,
-                theme: Theme::Blue,
-            },
-        })
-    }
 }
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-    let contents = fs::read_to_string(config.file_path)?;
-
-    for line in search(&config.query, &contents, &config.search_options) {
+    for line in search(&config.query, &config.file_path, &config.search_options)? {
         println!("{line}");
     }
 
     Ok(())
 }
 
-fn search(query: &str, contents: &str, search_options: &SearchOptions) -> Vec<String> {
+fn search(
+    query: &str,
+    file_path: &Box<Path>,
+    search_options: &SearchOptions,
+) -> Result<Vec<String>, Box<dyn Error>> {
     let mut results = Vec::new();
 
-    match search_options.case_sensitive {
-        true => {
-            for (i, line) in contents.lines().enumerate() {
-                if line.contains(query) {
-                    add_to_result(
-                        i,
-                        line,
-                        search_options.colored,
-                        search_options.line_numbered,
-                        query,
-                        search_options.theme,
-                        &mut results,
-                    );
-                }
-            }
-        }
-        false => {
-            let query_lowercase = &query.to_lowercase();
-            for (i, line) in contents.lines().enumerate() {
-                if line.to_lowercase().contains(query_lowercase) {
-                    add_to_result(
-                        i,
-                        line,
-                        search_options.colored,
-                        search_options.line_numbered,
-                        query,
-                        search_options.theme,
-                        &mut results,
-                    );
-                }
-            }
-        }
-    }
+    if file_path.is_dir() {
+        for child_entry in file_path.read_dir()? {
+            let child_entry = child_entry.unwrap();
+            let mut child_results = search(query, &Box::from(child_entry.path()), search_options)?;
+            if child_results.len() > 0 {
+                let heading = String::from(child_entry.path().to_str().unwrap());
 
-    results
+                let colored_heading = match search_options.theme {
+                    Theme::Blue => heading.blue(),
+                    Theme::Green => heading.green(),
+                    Theme::Purple => heading.purple(),
+                };
+
+                results.push(String::from(""));
+
+                results.push(if search_options.colored {
+                    colored_heading.to_string()
+                } else {
+                    heading
+                });
+                results.append(&mut child_results);
+            }
+        }
+        Ok(results)
+    } else if file_path.is_file() {
+        let contents = fs::read_to_string(file_path)?;
+        match search_options.case_sensitive {
+            true => {
+                for (i, line) in contents.lines().enumerate() {
+                    if line.contains(query) {
+                        add_to_result(
+                            i,
+                            line,
+                            search_options.colored,
+                            search_options.line_numbered,
+                            query,
+                            search_options.theme,
+                            &mut results,
+                        );
+                    }
+                }
+            }
+            false => {
+                let query_lowercase = &query.to_lowercase();
+                for (i, line) in contents.lines().enumerate() {
+                    if line.to_lowercase().contains(query_lowercase) {
+                        add_to_result(
+                            i,
+                            line,
+                            search_options.colored,
+                            search_options.line_numbered,
+                            query,
+                            search_options.theme,
+                            &mut results,
+                        );
+                    }
+                }
+            }
+        }
+
+        Ok(results)
+    } else {
+        Err("Path is neither a file nor a directory".into())
+    }
 }
 
 fn add_to_result(
@@ -189,23 +199,27 @@ fn add_to_result(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use indoc::indoc;
+    // use indoc::indoc;
 
     #[test]
-    fn search_case_insensitive() {
+    fn search_single_file_case_insensitive() {
         let query = "hello";
-        let contents = indoc! {"
-            hello world.
-            fello world.
-            World Hello World.
-        "};
+        // let contents = indoc! {"
+        //     hello world.
+        //     fello world.
+        //     World Hello World.
+        // "};
 
         assert_eq!(
-            vec!["hello world.", "World Hello World."],
+            vec![
+                "hello world.",
+                "World Hello World.",
+                "hello you hello world."
+            ],
             // Can directly use private functions in tests
             search(
                 query,
-                contents,
+                &Box::from(Path::new("./tests/hello_world.txt")),
                 &SearchOptions {
                     case_sensitive: false,
                     line_numbered: false,
@@ -213,23 +227,19 @@ mod tests {
                     theme: Theme::Blue
                 },
             )
+            .expect("Should not fail")
         );
     }
 
     #[test]
-    fn search_case_sensitive() {
+    fn search_single_file_case_sensitive() {
         let query = "hello";
-        let contents = indoc! {"
-            Hello world.
-            hello world.
-            World Hello world.
-        "};
 
         assert_eq!(
-            vec!["hello world."],
+            vec!["hello world.", "hello you hello world."],
             search(
                 query,
-                contents,
+                &Box::from(Path::new("./tests/hello_world.txt")),
                 &SearchOptions {
                     case_sensitive: true,
                     line_numbered: false,
@@ -237,6 +247,7 @@ mod tests {
                     theme: Theme::Blue
                 }
             )
+            .expect("Should not fail")
         );
     }
 }

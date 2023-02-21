@@ -19,7 +19,7 @@ struct Cli {
 
     /// The file path to search in
     #[arg(value_parser = file_path_parser)]
-    file_path: Option<String>,
+    file_path: Option<Box<Path>>,
 
     /// Interactive mode
     #[arg(long)]
@@ -42,11 +42,12 @@ struct Cli {
     theme: Option<Theme>,
 }
 
-fn file_path_parser(file_path: &str) -> Result<String, String> {
-    // Returning &str can cause lifetime issues
-    match Path::new(file_path).exists() {
-        true => Ok(file_path.to_string()),
-        false => Err(format!("File path {} does not exist", file_path)),
+fn file_path_parser(file_path_str: &str) -> Result<Box<Path>, String> {
+    // Path's instance size cannot be deduced at compile time hence should be stored on heap(?)
+    let file_path = Path::new(file_path_str);
+    match file_path.exists() {
+        true => Ok(Box::from(file_path)),
+        false => Err(format!("File path {} does not exist", file_path_str)),
     }
 }
 
@@ -75,8 +76,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             )
             .unwrap();
 
-            // The &str gets the same lifetime as the argument
-            let file_path = &file_path_parser(file_path.as_string().unwrap()).unwrap();
+            let file_path = file_path_parser(file_path.as_string().unwrap()).unwrap();
 
             let case_sensitive = requestty::prompt_one(
                 Question::confirm("case_sensitive")
@@ -104,7 +104,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             // Must as_string().unwrap() here in order to set the lifetime variable correctly
             Config::new(
-                query.as_string().unwrap(),
+                String::from(query.as_string().unwrap()),
                 file_path,
                 case_sensitive.as_bool().unwrap(),
                 line_numbered.as_bool().unwrap(),
@@ -123,8 +123,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
 
             Config::new(
-                &cli.query.unwrap(),
-                &cli.file_path.unwrap(),
+                cli.query.unwrap(),
+                cli.file_path.unwrap(),
                 case_sensitive_env_var || cli.case_sensitive,
                 // true if either env var is set or cli arg is set
                 cli.line_number,
