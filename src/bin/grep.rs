@@ -113,10 +113,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             )
         }
         false => {
-            // env::args() will return an iterator over the arguments
-            let args: Vec<String> = env::args().collect();
-            dbg!(format!("Running grep binary located in: {}", &args[0]));
-            // args[1..] will equal to the nth command line argument
+            // Only works for single line / function
+            // #[cfg(debug_assertions)]
+            if cfg!(debug_assertions) {
+                // env::args() will return an iterator over the arguments
+                let args: Vec<String> = env::args().collect();
+                dbg!(format!("Running grep binary located in: {}", &args[0]));
+                // args[1..] will equal to the nth command line argument
+            }
 
             Config::new(
                 &cli.query.unwrap(),
