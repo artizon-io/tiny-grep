@@ -4,4 +4,4 @@
 
 A `grep` terminal utility written in Rust
 
-![Demo](https://asciinema.org/a/561465)
+[![Demo](https://asciinema.org/a/561465.svg)](https://asciinema.org/a/561465?autoplay=1)
