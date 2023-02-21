@@ -1,10 +1,10 @@
-use clap::{Parser, ValueEnum};
+use clap::Parser;
 use requestty::Question;
 use std::env;
 use std::path::Path;
 use std::process;
 
-use tiny_grep::Config;
+use tiny_grep::{Config, Theme};
 
 /// A grep terminal utliity program written in Rust
 #[derive(Parser, Debug)]
@@ -40,14 +40,6 @@ struct Cli {
     /// Theme
     #[arg(long, value_enum)]
     theme: Option<Theme>,
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
-enum Theme {
-    /// Fancy blue color
-    Blue,
-    /// Fancy teal color
-    Teal,
 }
 
 fn file_path_parser(file_path: &str) -> Result<String, String> {
@@ -117,6 +109,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 case_sensitive.as_bool().unwrap(),
                 line_numbered.as_bool().unwrap(),
                 colored.as_bool().unwrap(),
+                Theme::Blue,
             )
         }
         false => {
@@ -132,6 +125,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // true if either env var is set or cli arg is set
                 cli.line_number,
                 cli.color,
+                cli.theme.unwrap_or_else(|| Theme::Blue),
             )
         }
     };

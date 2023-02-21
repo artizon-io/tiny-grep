@@ -1,3 +1,4 @@
+use clap::ValueEnum;
 use colored::*;
 use std::error::Error;
 use std::fs;
@@ -8,18 +9,35 @@ pub struct Config {
     pub search_options: SearchOptions,
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+pub enum Theme {
+    /// Fancy blue color
+    Blue,
+    /// Fancy green color
+    Green,
+    /// Fancy purple color
+    Purple,
+}
+
 pub struct SearchOptions {
     case_sensitive: bool,
     line_numbered: bool,
     colored: bool,
+    theme: Theme,
 }
 
 impl SearchOptions {
-    pub fn new(case_sensitive: bool, line_numbered: bool, colored: bool) -> SearchOptions {
+    pub fn new(
+        case_sensitive: bool,
+        line_numbered: bool,
+        colored: bool,
+        theme: Theme,
+    ) -> SearchOptions {
         SearchOptions {
             case_sensitive,
             line_numbered,
             colored,
+            theme,
         }
     }
 }
@@ -32,6 +50,7 @@ impl Config {
         case_sensitive: bool,
         line_numbered: bool,
         colored: bool,
+        theme: Theme,
     ) -> Config {
         Config {
             query: query.to_string(),
@@ -40,6 +59,7 @@ impl Config {
                 case_sensitive,
                 line_numbered,
                 colored,
+                theme,
             },
         }
     }
@@ -61,6 +81,7 @@ impl Config {
                 case_sensitive: false,
                 line_numbered: false,
                 colored: false,
+                theme: Theme::Blue,
             },
         })
     }
@@ -89,6 +110,7 @@ fn search(query: &str, contents: &str, search_options: &SearchOptions) -> Vec<St
                         search_options.colored,
                         search_options.line_numbered,
                         query,
+                        search_options.theme,
                         &mut results,
                     );
                 }
@@ -104,6 +126,7 @@ fn search(query: &str, contents: &str, search_options: &SearchOptions) -> Vec<St
                         search_options.colored,
                         search_options.line_numbered,
                         query,
+                        search_options.theme,
                         &mut results,
                     );
                 }
@@ -120,18 +143,25 @@ fn add_to_result(
     colored: bool,
     line_numbered: bool,
     query: &str,
+    theme: Theme,
     results: &mut Vec<String>,
 ) {
+    let (colored_query, colored_line_index) = match theme {
+        Theme::Blue => (query.blue().bold(), (i + 1).to_string().blue()),
+        Theme::Green => (query.green().bold(), (i + 1).to_string().green()),
+        Theme::Purple => (query.purple().bold(), (i + 1).to_string().purple()),
+    };
+
     match line_numbered {
         true => {
             match colored {
                 true => {
                     results.push(format!(
                         "{}: {}",
-                        (i + 1).to_string().blue(),
+                        colored_line_index,
                         // The coloring is done inside ColoredString's deref() therefore must first cast it to a String
                         // https://stackoverflow.com/questions/52792990/why-does-replacing-a-substring-with-a-colored-string-from-the-colored-crate-not
-                        line.replace(query, &query.blue().bold().to_string())
+                        line.replace(query, &colored_query.to_string())
                     ));
                 }
                 false => {
@@ -146,7 +176,7 @@ fn add_to_result(
             true => {
                 results.push(format!(
                     "{}",
-                    line.replace(query, &query.blue().bold().to_string())
+                    line.replace(query, &colored_query.to_string())
                 ));
             }
             false => {
@@ -179,7 +209,8 @@ mod tests {
                 &SearchOptions {
                     case_sensitive: false,
                     line_numbered: false,
-                    colored: false
+                    colored: false,
+                    theme: Theme::Blue
                 },
             )
         );
@@ -202,7 +233,8 @@ mod tests {
                 &SearchOptions {
                     case_sensitive: true,
                     line_numbered: false,
-                    colored: false
+                    colored: false,
+                    theme: Theme::Blue
                 }
             )
         );
