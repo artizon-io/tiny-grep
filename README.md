@@ -5,3 +5,9 @@
 A `grep` terminal utility written in Rust
 
 [![Demo](https://asciinema.org/a/561465.svg)](https://asciinema.org/a/561465?autoplay=1)
+
+## Features
+
+- Interactive mode
+- Recursive search
+- Colors and themes
