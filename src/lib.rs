@@ -94,7 +94,9 @@ fn search(
                     Theme::Purple => heading.purple(),
                 };
 
-                results.push(String::from(""));
+                if results.len() > 0 {
+                    results.push(String::from(""));
+                }
 
                 results.push(if search_options.colored {
                     colored_heading.to_string()
