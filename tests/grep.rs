@@ -7,11 +7,11 @@ mod tests {
 
     #[test]
     fn run_case_insensitive() {
-        run(Config::new("you", "./tests/test.txt", false)).expect("Expect to run successfully");
+        run(Config::new("you", "./tests/test.txt", false, false, false)).expect("Expect to run successfully");
     }
 
     #[test]
     fn run_case_sensitive() {
-        run(Config::new("you", "./tests/test.txt", true)).expect("Expect to run successfully");
+        run(Config::new("you", "./tests/test.txt", true, false, false)).expect("Expect to run successfully");
     }
 }

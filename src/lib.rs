@@ -1,3 +1,4 @@
+use colored::*;
 use std::error::Error;
 use std::fs;
 
@@ -9,15 +10,37 @@ pub struct Config {
 
 pub struct SearchOptions {
     case_sensitive: bool,
+    line_numbered: bool,
+    colored: bool,
+}
+
+impl SearchOptions {
+    pub fn new(case_sensitive: bool, line_numbered: bool, colored: bool) -> SearchOptions {
+        SearchOptions {
+            case_sensitive,
+            line_numbered,
+            colored,
+        }
+    }
 }
 
 impl Config {
     // Convention is new() never fails
-    pub fn new(query: &str, file_path: &str, case_sensitive: bool) -> Config {
+    pub fn new(
+        query: &str,
+        file_path: &str,
+        case_sensitive: bool,
+        line_numbered: bool,
+        colored: bool,
+    ) -> Config {
         Config {
-            query: query.clone().to_string(),
-            file_path: file_path.clone().to_string(),
-            search_options: SearchOptions { case_sensitive },
+            query: query.to_string(),
+            file_path: file_path.to_string(),
+            search_options: SearchOptions {
+                case_sensitive,
+                line_numbered,
+                colored,
+            },
         }
     }
 
@@ -36,6 +59,8 @@ impl Config {
             file_path,
             search_options: SearchOptions {
                 case_sensitive: false,
+                line_numbered: false,
+                colored: false,
             },
         })
     }
@@ -51,28 +76,84 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn search<'a>(query: &str, contents: &'a str, search_options: &SearchOptions) -> Vec<&'a str> {
+fn search(query: &str, contents: &str, search_options: &SearchOptions) -> Vec<String> {
     let mut results = Vec::new();
 
     match search_options.case_sensitive {
         true => {
-            for line in contents.lines() {
+            for (i, line) in contents.lines().enumerate() {
                 if line.contains(query) {
-                    results.push(line);
+                    add_to_result(
+                        i,
+                        line,
+                        search_options.colored,
+                        search_options.line_numbered,
+                        query,
+                        &mut results,
+                    );
                 }
             }
         }
         false => {
             let query_lowercase = &query.to_lowercase();
-            for line in contents.lines() {
+            for (i, line) in contents.lines().enumerate() {
                 if line.to_lowercase().contains(query_lowercase) {
-                    results.push(line);
+                    add_to_result(
+                        i,
+                        line,
+                        search_options.colored,
+                        search_options.line_numbered,
+                        query,
+                        &mut results,
+                    );
                 }
             }
         }
     }
 
     results
+}
+
+fn add_to_result(
+    i: usize,
+    line: &str,
+    colored: bool,
+    line_numbered: bool,
+    query: &str,
+    results: &mut Vec<String>,
+) {
+    match line_numbered {
+        true => {
+            match colored {
+                true => {
+                    results.push(format!(
+                        "{}: {}",
+                        (i + 1).to_string().blue(),
+                        // The coloring is done inside ColoredString's deref() therefore must first cast it to a String
+                        // https://stackoverflow.com/questions/52792990/why-does-replacing-a-substring-with-a-colored-string-from-the-colored-crate-not
+                        line.replace(query, &query.blue().bold().to_string())
+                    ));
+                }
+                false => {
+                    // Cannot make it a &str because we will be forced to allocate a new string
+                    // but it will be droppeed at the end of the function
+                    // Therefore, we make results a Vec<String> instead of Vec<&'a str> with 'a being life time of line
+                    results.push(format!("{}: {line}", i + 1));
+                }
+            }
+        }
+        false => match colored {
+            true => {
+                results.push(format!(
+                    "{}",
+                    line.replace(query, &query.blue().bold().to_string())
+                ));
+            }
+            false => {
+                results.push(line.to_string());
+            }
+        },
+    }
 }
 
 #[cfg(test)]
@@ -96,8 +177,10 @@ mod tests {
                 query,
                 contents,
                 &SearchOptions {
-                    case_sensitive: false
-                }
+                    case_sensitive: false,
+                    line_numbered: false,
+                    colored: false
+                },
             )
         );
     }
@@ -117,7 +200,9 @@ mod tests {
                 query,
                 contents,
                 &SearchOptions {
-                    case_sensitive: true
+                    case_sensitive: true,
+                    line_numbered: false,
+                    colored: false
                 }
             )
         );

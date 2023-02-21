@@ -29,6 +29,14 @@ struct Cli {
     #[arg(long)]
     case_sensitive: bool,
 
+    /// Display line number
+    #[arg(long)]
+    line_number: bool,
+
+    /// Use colored output
+    #[arg(long)]
+    color: bool,
+
     /// Theme
     #[arg(long, value_enum)]
     theme: Option<Theme>,
@@ -86,17 +94,35 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             )
             .unwrap();
 
+            let line_numbered = requestty::prompt_one(
+                Question::confirm("line_numbered")
+                    .message("Show line number?")
+                    .default(true)
+                    .build(),
+            )
+            .unwrap();
+
+            let colored = requestty::prompt_one(
+                Question::confirm("colored")
+                    .message("Use colored output?")
+                    .default(true)
+                    .build(),
+            )
+            .unwrap();
+
             // Must as_string().unwrap() here in order to set the lifetime variable correctly
             Config::new(
                 query.as_string().unwrap(),
                 file_path,
                 case_sensitive.as_bool().unwrap(),
+                line_numbered.as_bool().unwrap(),
+                colored.as_bool().unwrap(),
             )
         }
         false => {
             // env::args() will return an iterator over the arguments
             let args: Vec<String> = env::args().collect();
-            dbg!("Running grep binary located in: {}", &args[0]);
+            dbg!(format!("Running grep binary located in: {}", &args[0]));
             // args[1..] will equal to the nth command line argument
 
             Config::new(
@@ -104,6 +130,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 &cli.file_path.unwrap(),
                 case_sensitive_env_var || cli.case_sensitive,
                 // true if either env var is set or cli arg is set
+                cli.line_number,
+                cli.color,
             )
         }
     };
