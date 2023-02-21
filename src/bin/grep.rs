@@ -1,5 +1,5 @@
 use clap::{Parser, ValueEnum};
-use requestty::questions;
+use requestty::Question;
 use std::env;
 use std::path::Path;
 use std::process;
@@ -59,33 +59,38 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let config = match cli.interactive {
         true => {
-            let questions = questions![
-                Input {
-                    name: "query",
-                    message: "String to search for?",
-                    default: "Hello world",
-                },
-                Input {
-                    name: "file_path",
-                    message: "File to search in?",
-                    default: "text.txt",
-                },
-                Confirm {
-                    name: "case_sensitive",
-                    message: "Case sensitive search?",
-                    default: false,
-                }
-            ];
+            let query = requestty::prompt_one(
+                Question::input("query")
+                    .message("String to search for?")
+                    .default("Hello world")
+                    .build(),
+            )
+            .unwrap();
 
-            // dbg!() macro will move its argument (and return it)
-            let answers = dbg!(requestty::prompt(questions)?);
+            let file_path = requestty::prompt_one(
+                Question::input("file_path")
+                    .message("File to search in?")
+                    .default("text.txt")
+                    .build(),
+            )
+            .unwrap();
 
-            let file_path = answers["file_path"].as_string().unwrap();
+            // The &str gets the same lifetime as the argument
+            let file_path = &file_path_parser(file_path.as_string().unwrap()).unwrap();
 
+            let case_sensitive = requestty::prompt_one(
+                Question::confirm("case_sensitive")
+                    .message("Case sensitive search?")
+                    .default(false)
+                    .build(),
+            )
+            .unwrap();
+
+            // Must as_string().unwrap() here in order to set the lifetime variable correctly
             Config::new(
-                &answers["query"].as_string().unwrap(),
-                &file_path_parser(file_path)?,
-                answers["case_sensitive"].as_bool().unwrap(),
+                query.as_string().unwrap(),
+                file_path,
+                case_sensitive.as_bool().unwrap(),
             )
         }
         false => {
