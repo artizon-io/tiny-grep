@@ -1,4 +1,3 @@
-// use std::env;
 use std::error::Error;
 use std::fs;
 
@@ -14,17 +13,6 @@ pub struct SearchOptions {
 
 impl Config {
     // Convention is new() never fails
-    // pub fn new(args: &[String]) -> Config {
-    //     assert!(args.len() >= 3, "Less than 2 arguments received");
-
-    //     let query = args[1].clone();
-    //     let file_path = args[2].clone();
-
-    //     let case_sensitive = env::var("CASE_SENSITIVE").is_ok();
-
-    //     Config { query, file_path, search_options: SearchOptions { case_sensitive } }
-    // }
-
     pub fn new(query: &str, file_path: &str, case_sensitive: bool) -> Config {
         Config {
             query: query.clone().to_string(),
@@ -33,25 +21,24 @@ impl Config {
         }
     }
 
-    // Let error value be a string literal that have 'static lifetime
-    // pub fn build(args: &[String]) -> Result<Config, &'static str> {
-    //     if args.len() < 3 {
-    //         return Err("Less than 2 arguments received");
-    //     }
+    /// Build a new Config struct using the array of command line arguments
+    // Let error value be a string literal that have 'static lifetime (for now)
+    pub fn build(args: &[String]) -> Result<Config, &'static str> {
+        if args.len() < 3 {
+            return Err("Less than 2 arguments received");
+        }
 
-    //     let query = args[1].clone();
-    //     let file_path = args[2].clone();
+        let query = args[1].clone();
+        let file_path = args[2].clone();
 
-    //     // env::var() returns Result enum
-    //     // is_ok() returns true if the Result enum is Ok variant
-    //     let case_sensitive = env::var("CASE_SENSITIVE").is_ok();
-
-    //     Ok(Config {
-    //         query,
-    //         file_path,
-    //         search_options: SearchOptions { case_sensitive },
-    //     })
-    // }
+        Ok(Config {
+            query,
+            file_path,
+            search_options: SearchOptions {
+                case_sensitive: false,
+            },
+        })
+    }
 }
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
@@ -67,8 +54,6 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 fn search<'a>(query: &str, contents: &'a str, search_options: &SearchOptions) -> Vec<&'a str> {
     let mut results = Vec::new();
 
-    let query_lowercase = &query.to_lowercase();
-
     match search_options.case_sensitive {
         true => {
             for line in contents.lines() {
@@ -78,6 +63,7 @@ fn search<'a>(query: &str, contents: &'a str, search_options: &SearchOptions) ->
             }
         }
         false => {
+            let query_lowercase = &query.to_lowercase();
             for line in contents.lines() {
                 if line.to_lowercase().contains(query_lowercase) {
                     results.push(line);
@@ -95,7 +81,7 @@ mod tests {
     use indoc::indoc;
 
     #[test]
-    fn case_insensitive() {
+    fn search_case_insensitive() {
         let query = "hello";
         let contents = indoc! {"
             hello world.
@@ -105,6 +91,7 @@ mod tests {
 
         assert_eq!(
             vec!["hello world.", "World Hello World."],
+            // Can directly use private functions in tests
             search(
                 query,
                 contents,
@@ -116,7 +103,7 @@ mod tests {
     }
 
     #[test]
-    fn case_sensitive() {
+    fn search_case_sensitive() {
         let query = "hello";
         let contents = indoc! {"
             Hello world.

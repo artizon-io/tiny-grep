@@ -1,10 +1,10 @@
-// use std::env;
 use clap::{Parser, ValueEnum};
 use requestty::questions;
+use std::env;
 use std::path::Path;
 use std::process;
 
-use rust_grep::Config;
+use tiny_grep::Config;
 
 /// A grep terminal utliity program written in Rust
 #[derive(Parser, Debug)]
@@ -13,7 +13,7 @@ use rust_grep::Config;
 #[command(next_line_help = true)]
 struct Cli {
     /// The query string to search for
-    // Make it a keyword argument
+    // To make it a keyword argument:
     // #[arg(long)]
     query: Option<String>,
 
@@ -53,6 +53,10 @@ fn file_path_parser(file_path: &str) -> Result<String, String> {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
+    // env::var() returns Result enum
+    // is_ok() returns true if the Result enum is Ok variant
+    let case_sensitive_env_var = env::var("CASE_SENSITIVE").is_ok();
+
     let config = match cli.interactive {
         true => {
             let questions = questions![
@@ -73,44 +77,34 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             ];
 
-            let answers = requestty::prompt(questions)?;
+            // dbg!() macro will move its argument (and return it)
+            let answers = dbg!(requestty::prompt(questions)?);
 
-            // println!("Answers: {:#?}", answers);
-
-            // println!("{:#?}", answers["query"]);
-            // println!("{:#?}", answers["file_path"]);
+            let file_path = answers["file_path"].as_string().unwrap();
 
             Config::new(
                 &answers["query"].as_string().unwrap(),
-                &answers["file_path"].as_string().unwrap(),
+                &file_path_parser(file_path)?,
                 answers["case_sensitive"].as_bool().unwrap(),
             )
         }
         false => {
             // env::args() will return an iterator over the arguments
-            // let args: Vec<String> = env::args().collect();
-            // args[0] will equal to the relative path of the executable
+            let args: Vec<String> = env::args().collect();
+            dbg!("Running grep binary located in: {}", &args[0]);
+            // args[1..] will equal to the nth command line argument
 
             Config::new(
                 &cli.query.unwrap(),
                 &cli.file_path.unwrap(),
-                cli.case_sensitive,
+                case_sensitive_env_var || cli.case_sensitive,
+                // true if either env var is set or cli arg is set
             )
-            // maybe_config.unwrap_or_else(|err| {
-            //     eprintln!("Problem parsing arguments: {err}");
-            //     process::exit(1);
-            // })
         }
     };
 
-    // dbg!() macro will move its argument, so must be placed after Config::build(&args)
-    // dbg!(args);
-
-    // println!("Searching for '{}'", config.query);
-    // println!("In file '{}'", config.file_path);
-
     // run() will take ownership of config
-    if let Err(e) = rust_grep::run(config) {
+    if let Err(e) = tiny_grep::run(config) {
         eprintln!("Application error: {e}");
         process::exit(1);
     }

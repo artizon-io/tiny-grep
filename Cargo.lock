@@ -407,15 +407,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust-grep"
-version = "0.1.0"
-dependencies = [
- "clap",
- "indoc",
- "requestty",
-]
-
-[[package]]
 name = "rustix"
 version = "0.36.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -532,6 +523,15 @@ dependencies = [
  "smawk",
  "unicode-linebreak",
  "unicode-width",
+]
+
+[[package]]
+name = "tiny-grep"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "indoc",
+ "requestty",
 ]
 
 [[package]]
